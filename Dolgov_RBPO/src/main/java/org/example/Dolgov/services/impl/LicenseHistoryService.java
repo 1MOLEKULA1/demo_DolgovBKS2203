@@ -4,8 +4,11 @@ import lombok.RequiredArgsConstructor;
 import org.example.Dolgov.entity.LicenseHistory;
 import org.example.Dolgov.storage.LicenseHistoryRepository;
 import org.springframework.stereotype.Service;
-
+import java.util.List;
 import java.util.Date;
+
+//TODO: 1. Получить историю нельзя? (Александр)
+
 
 @Service
 @RequiredArgsConstructor
@@ -23,7 +26,15 @@ public class LicenseHistoryService {
         history.setChangeDate(changeDate); // Устанавливаем дату изменения
         history.setDescription(description); // Устанавливаем описание изменения
 
+
         // Сохраняем запись в базе данных через репозиторий
         licenseHistoryRepository.save(history);
     }
+    public List<LicenseHistory> getLicenseHistoryByUserId(Long userId) {
+        return licenseHistoryRepository.findByUserId(userId);
+    }
+    public List<LicenseHistory> getLicenseHistoryByLicenseId(Long licenseId) {
+        return licenseHistoryRepository.findByLicenseId(licenseId);
+    }
+
 }

@@ -8,6 +8,9 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.Optional;
 
+//TODO: 1. saveProduct - потенциально создаёте дубликаты продуктов (Александр)
+
+
 @Service
 public class ProductService {
 
@@ -18,9 +21,18 @@ public class ProductService {
         this.productRepository = productRepository;
     }
 
-    // Создание или обновление продукта
+    // Создание или обновление продукта с проверкой на дубликаты
     public Product saveProduct(Product product) {
-        return productRepository.save(product);
+        // Проверка, существует ли продукт с таким же названием
+        Optional<Product> existingProduct = productRepository.findByName(product.getName());
+        if (existingProduct.isPresent()) {
+            // Если продукт с таким названием существует, можно вернуть его (или обновить)
+            // В данном случае, возвращаем существующий продукт
+            return existingProduct.get();
+        } else {
+            // Если продукта нет, сохраняем новый
+            return productRepository.save(product);
+        }
     }
 
     // Получение продукта по ID

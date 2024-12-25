@@ -5,6 +5,7 @@ import org.example.Dolgov.services.impl.ProductService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -23,45 +24,43 @@ public class ProductForLicenseController {
     }
 
     // Метод для создания или обновления продукта
+    // Доступ разрешен только пользователям с ролью ADMIN
+    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping
     public ResponseEntity<Product> createOrUpdateProduct(@RequestBody Product product) {
-        // Сохраняем продукт в базе данных (создание или обновление)
         Product savedProduct = productService.saveProduct(product);
-        // Возвращаем ответ с созданным или обновленным продуктом и статусом CREATED
         return ResponseEntity.status(HttpStatus.CREATED).body(savedProduct);
     }
 
     // Метод для получения продукта по его ID
+    // Доступ разрешен пользователям с ролями USER или ADMIN
+    @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
     @GetMapping("/{id}")
     public ResponseEntity<Product> getProductById(@PathVariable Long id) {
-        // Ищем продукт по ID
         Optional<Product> product = productService.getProductById(id);
-        // Если продукт найден, возвращаем его с кодом 200 (OK), иначе - код 404 (NOT FOUND)
         return product.map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).build());
     }
 
     // Метод для получения всех продуктов
+    // Доступ разрешен пользователям с ролями USER или ADMIN
+    @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
     @GetMapping
     public ResponseEntity<List<Product>> getAllProducts() {
-        // Получаем список всех продуктов
         List<Product> products = productService.getAllProducts();
-        // Возвращаем список продуктов с кодом 200 (OK)
         return ResponseEntity.ok(products);
     }
 
     // Метод для удаления продукта по ID
+    // Доступ разрешен только пользователям с ролью ADMIN
+    @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteProduct(@PathVariable Long id) {
-        // Проверяем, существует ли продукт с данным ID
         Optional<Product> product = productService.getProductById(id);
         if (product.isPresent()) {
-            // Если продукт существует, удаляем его из базы данных
             productService.deleteProduct(id);
-            // Возвращаем ответ с кодом 204 (No Content), что означает успешное удаление
             return ResponseEntity.noContent().build();
         } else {
-            // Если продукт не найден, возвращаем код 404 (Not Found)
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }
     }

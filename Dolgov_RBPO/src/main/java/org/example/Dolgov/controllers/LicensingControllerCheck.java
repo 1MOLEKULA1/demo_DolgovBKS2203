@@ -26,13 +26,13 @@ public class LicensingControllerCheck {
 
     private static final Logger logger = LoggerFactory.getLogger(LicensingControllerCheck.class); // Логгер для записи действий
 
-    // Константы для сообщений
+    private static final String SECRET_KEY = "SuperSecretKey123"; // Секретный ключ для подписи тикетов
+
     public static final String ERROR_AUTHENTICATION = "Ошибка аутентификации";
     public static final String ERROR_DEVICE_NOT_FOUND = "Устройство не найдено";
     public static final String ERROR_LICENSE_NOT_FOUND = "Лицензия не найдена";
     public static final String ERROR_LICENSE_NOT_ACTIVE = "Нет активной лицензии для устройства";
 
-    // Вспомогательный метод для обработки ошибок
     private ResponseEntity<String> createErrorResponse(HttpStatus status, String message) {
         logger.error(message);
         return ResponseEntity.status(status).body(message);
@@ -41,53 +41,49 @@ public class LicensingControllerCheck {
     @PostMapping("/check")
     public ResponseEntity<?> checkLicense(HttpServletRequest request, @RequestBody LicenseCheck requestData) {
         try {
-            // Извлекаем роли из токена
             Set<String> roles = jwtTokenProvider.getRolesFromRequest(request);
             logger.info("Роли, извлеченные из токена: {}", roles);
 
-            // Проверка аутентификации пользователя
             if (roles.isEmpty()) {
                 return createErrorResponse(HttpStatus.UNAUTHORIZED, ERROR_AUTHENTICATION);
             }
 
-            // Поиск устройства по MAC-адресу и имени
             Optional<Device> deviceOptional = deviceRepository.findByMacAddressAndName(requestData.getMacAddress(), requestData.getDeviceName());
             if (deviceOptional.isEmpty()) {
-                return createErrorResponse(HttpStatus.NOT_FOUND, String.format(ERROR_DEVICE_NOT_FOUND, requestData.getMacAddress(), requestData.getDeviceName()));
+                return createErrorResponse(HttpStatus.NOT_FOUND, ERROR_DEVICE_NOT_FOUND);
             }
-            Device device = deviceOptional.get(); // Получаем устройство из Optional
+
+            Device device = deviceOptional.get();
             logger.info("Устройство найдено: {}", device);
 
-            // Получение информации о лицензии устройства
             Optional<DeviceLicense> deviceLicenseOptional = deviceLicenseRepository.findByDeviceId(device.getId());
             if (deviceLicenseOptional.isEmpty()) {
-                return createErrorResponse(HttpStatus.NOT_FOUND, String.format(ERROR_LICENSE_NOT_ACTIVE, device.getId()));
+                return createErrorResponse(HttpStatus.NOT_FOUND, ERROR_LICENSE_NOT_ACTIVE);
             }
 
-            // Лицензия найдена, извлекаем license_id и находим соответствующую лицензию
             DeviceLicense deviceLicense = deviceLicenseOptional.get();
             Optional<License> licenseOptional = licenseRepository.findById(deviceLicense.getLicenseId());
 
             if (licenseOptional.isPresent()) {
-                License license = licenseOptional.get(); // Получаем лицензию из Optional
-                // Создаем тикет, подтверждающий активацию лицензии
-                Ticket ticket = Ticket.createTicket(license.getUser().getId(), false, license.getEndingDate());
-                ticket.setDeviceId(deviceLicense.getDeviceId()); // Ассоциируем устройство с тикетом
+                License license = licenseOptional.get();
+
+                Ticket ticket = Ticket.createTicket(
+                        license.getUser().getId(),
+                        false,
+                        license.getEndingDate(),
+                        deviceLicense.getDeviceId(),
+                        SECRET_KEY
+                );
 
                 logger.info("Тикет подтверждения активации лицензии: {}", ticket);
 
-                // Возвращаем успешный ответ с информацией о тикете
                 return ResponseEntity.ok("Лицензия активирована на устройстве. Тикет: " + ticket.getId());
             } else {
-                // Лицензия не найдена
-                return createErrorResponse(HttpStatus.OK, String.format("Лицензия с ID %d не найдена", deviceLicense.getLicenseId()));
+                return createErrorResponse(HttpStatus.NOT_FOUND, String.format(ERROR_LICENSE_NOT_FOUND, deviceLicense.getLicenseId()));
             }
 
         } catch (Exception e) {
-            // Обрабатываем исключения и создаем тикет с ошибкой
             logger.error("Ошибка при проверке лицензии: {}", e.getMessage());
-            Ticket ticket = Ticket.createTicket(null, true, null); // Ошибка без данных лицензии
-            logger.info("Создан тикет с ошибкой: {}", ticket);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Произошла ошибка при проверке лицензии.");
         }
     }

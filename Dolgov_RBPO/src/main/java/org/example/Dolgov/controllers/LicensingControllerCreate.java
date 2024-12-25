@@ -18,6 +18,9 @@ import java.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+//TODO: 1. createLicense - проверку прав доступа сделать при помощи security, а не использовать кривую проверку Данилина (Александр)
+//TODO: 2. assembleLicense - даты первой активации и окончания должны устанавливаться только при первой активации лицензии (Александр)
+
 @RestController
 @RequestMapping("/licensing") // Устанавливаем маршрут для функциональности лицензирования
 @RequiredArgsConstructor // Автоматически генерируется конструктор с зависимостями
@@ -59,10 +62,6 @@ public class LicensingControllerCreate {
             Set<String> roles = jwtTokenProvider.getRolesFromRequest(request);  // Используем новый метод
             logger.info("Role extracted from token: {}", roles);
 
-//            // Проверка роли пользователя
-//            if (!roles.contains("ROLE_ADMIN")) {
-//                return createErrorResponse(HttpStatus.FORBIDDEN, "Attempt to create a license without ADMIN rights");
-//            }
 
             // Проверка существования продукта
             logger.info("Checking if product exists with ID: {}", requestData.getProductId());

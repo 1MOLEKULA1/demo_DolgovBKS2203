@@ -7,7 +7,6 @@ import java.util.Optional;
 
 public interface ProductRepository extends JpaRepository<Product, Long> {
 
-    // Метод для поиска продукта по ID
-    Optional<Product> findById(Long id);
-
+    // Метод для поиска продукта по уникальному атрибуту (например, по имени)
+    Optional<Product> findByName(String name);
 }

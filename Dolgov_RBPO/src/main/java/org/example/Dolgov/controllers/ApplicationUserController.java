@@ -3,17 +3,20 @@ package org.example.Dolgov.controllers;
 import org.example.Dolgov.entity.ApplicationUser;
 import org.example.Dolgov.storage.ApplicationUserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Optional;
 
+//TODO: 1. Нет разграничения доступа (Александр)
+
 
 @RestController
-@RequestMapping("/api/users") // Базовый маршрут для всех методов контроллера
+@RequestMapping("/api/users")
 public class ApplicationUserController {
 
-    @Autowired // Внедрение зависимости для работы с репозиторием пользователей
+    @Autowired
     private ApplicationUserRepository userRepository;
 
     /**
@@ -22,8 +25,8 @@ public class ApplicationUserController {
      * @return Список всех пользователей из базы данных.
      */
     @GetMapping
+    @PreAuthorize("hasRole('ADMIN')") // Доступ только для пользователей с ролью ROLE_ADMIN
     public List<ApplicationUser> getAllUsers() {
-        // Возвращаем список всех пользователей, найденных в репозитории
         return userRepository.findAll();
     }
 
@@ -34,11 +37,9 @@ public class ApplicationUserController {
      * @return Объект пользователя или null, если пользователь не найден.
      */
     @GetMapping("/{id}")
+    @PreAuthorize("hasAuthority('ROLE_USER') or hasAuthority('ROLE_ADMIN')") // Доступ для пользователей с ролью ROLE_USER или ROLE_ADMIN
     public ApplicationUser getUserById(@PathVariable Long id) {
-        // Ищем пользователя в репозитории по ID
         Optional<ApplicationUser> user = userRepository.findById(id);
-
-        // Если пользователь найден, возвращаем его; иначе возвращаем null
         return user.orElse(null);
     }
 
@@ -49,8 +50,8 @@ public class ApplicationUserController {
      * @return Созданный пользователь с присвоенным ID.
      */
     @PostMapping
+    @PreAuthorize("hasRole('ADMIN')") // Доступ только для пользователей с ролью ROLE_ADMIN
     public ApplicationUser createUser(@RequestBody ApplicationUser user) {
-        // Сохраняем нового пользователя в базе данных
         return userRepository.save(user);
     }
 
@@ -62,11 +63,9 @@ public class ApplicationUserController {
      * @return Обновленный объект пользователя.
      */
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")// Доступ только для пользователей с ролью ROLE_ADMIN
     public ApplicationUser updateUser(@PathVariable Long id, @RequestBody ApplicationUser user) {
-        // Устанавливаем ID, чтобы обновить данные существующего пользователя
         user.setId(id);
-
-        // Сохраняем изменения в базе данных
         return userRepository.save(user);
     }
 
@@ -76,8 +75,8 @@ public class ApplicationUserController {
      * @param id Идентификатор пользователя, который нужно удалить.
      */
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')") // Доступ только для пользователей с ролью ROLE_ADMIN
     public void deleteUser(@PathVariable Long id) {
-        // Удаляем пользователя из базы данных по ID
         userRepository.deleteById(id);
     }
 }

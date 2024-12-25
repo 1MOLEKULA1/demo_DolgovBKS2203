@@ -12,6 +12,8 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.Optional;
 
+//TODO: 1. saveDevice - что будет, если у устройство уже есть? (Александр) (у нас проверки все реализованы если одинаковые мак адреса то не получится, а если имена одинаковые то пропустит тк это логично)
+
 @Service
 public class DeviceService {
 
@@ -31,7 +33,28 @@ public class DeviceService {
 
     // Метод для сохранения или обновления устройства
     public Device saveDevice(Device device) {
-        return deviceRepository.save(device);  // Сохраняем устройство в базе данных
+        Device existingDevice = deviceRepository.findByMacAddress(device.getMacAddress());
+        if (existingDevice != null) {
+            throw new IllegalArgumentException("Устройство с таким MAC-адресом уже существует: " + device.getMacAddress());
+        }
+
+        return deviceRepository.save(device);
+    }
+    public Device findOrRegisterDevice(String macAddress, String deviceName, Long userId) {
+        Device device = deviceRepository.findByMacAddress(macAddress);
+        if (device != null) {
+            // Если устройство найдено, обновляем его имя и пользователя
+            device.setName(deviceName);
+            device.setUserId(userId);
+            return deviceRepository.save(device); // Сохраняем обновленное устройство
+        }
+        // Если устройство не найдено, создаём новое
+        Device newDevice = new Device();
+        newDevice.setMacAddress(macAddress);
+        newDevice.setName(deviceName);
+        newDevice.setUserId(userId);
+        deviceRepository.save(newDevice);
+        return newDevice;
     }
 
     // Метод для получения устройства по его ID

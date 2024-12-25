@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.Optional;
 
+//TODO: 1. saveLicenseType - что будет при попытке повторно сохранить существующий тип? (Александр)
 @Service
 public class LicenseTypeService {
 
@@ -20,8 +21,15 @@ public class LicenseTypeService {
 
     // Создание или обновление типа лицензии
     public LicenseType saveLicenseType(LicenseType licenseType) {
+        // Проверяем, существует ли тип лицензии с таким же названием
+        Optional<LicenseType> existingLicenseType = licenseTypeRepository.findByName(licenseType.getName());
+        if (existingLicenseType.isPresent()) {
+            // Если тип лицензии существует, можно выбросить исключение или вернуть существующий тип
+            throw new IllegalArgumentException("Тип лицензии с таким названием уже существует: " + licenseType.getName());
+        }
         return licenseTypeRepository.save(licenseType);
     }
+
 
     // Получение типа лицензии по ID
     public Optional<LicenseType> getLicenseTypeById(Long id) {
