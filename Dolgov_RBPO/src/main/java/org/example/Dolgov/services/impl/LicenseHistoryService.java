@@ -1,6 +1,8 @@
 package org.example.Dolgov.services.impl;
 
 import lombok.RequiredArgsConstructor;
+import org.example.Dolgov.entity.ApplicationUser;
+import org.example.Dolgov.entity.License;
 import org.example.Dolgov.entity.LicenseHistory;
 import org.example.Dolgov.storage.LicenseHistoryRepository;
 import org.springframework.stereotype.Service;
@@ -17,7 +19,7 @@ public class LicenseHistoryService {
     private final LicenseHistoryRepository licenseHistoryRepository;
 
     // Метод для записи изменений в истории лицензий
-    public void recordLicenseChange(Long licenseId, Long userId, String status, Date changeDate, String description) {
+    public void recordLicenseChange(License licenseId, ApplicationUser userId, String status, Date changeDate, String description) {
         // Создаем объект истории лицензии
         LicenseHistory history = new LicenseHistory();
         history.setLicenseId(licenseId); // Устанавливаем идентификатор лицензии
@@ -30,10 +32,10 @@ public class LicenseHistoryService {
         // Сохраняем запись в базе данных через репозиторий
         licenseHistoryRepository.save(history);
     }
-    public List<LicenseHistory> getLicenseHistoryByUserId(Long userId) {
+    public List<LicenseHistory> getLicenseHistoryByUserId(ApplicationUser userId) {
         return licenseHistoryRepository.findByUserId(userId);
     }
-    public List<LicenseHistory> getLicenseHistoryByLicenseId(Long licenseId) {
+    public List<LicenseHistory> getLicenseHistoryByLicenseId(License licenseId) {
         return licenseHistoryRepository.findByLicenseId(licenseId);
     }
 

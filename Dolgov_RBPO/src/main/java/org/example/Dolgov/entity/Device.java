@@ -29,6 +29,7 @@ public class Device {
     @Column(name = "mac_address")  // Указывает, что это поле соответствует колонке "mac_address" в таблице
     private String macAddress;
 
-    @Column(name = "user_id")  // Указывает, что это поле соответствует колонке "user_id" в таблице
-    private Long userId;
+    @ManyToOne
+    @JoinColumn(name = "user_id")  // Указывает, что это поле соответствует колонке "user_id" в таблице
+    private ApplicationUser userId;
 }

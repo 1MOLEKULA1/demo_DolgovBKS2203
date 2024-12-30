@@ -25,11 +25,13 @@ public class LicenseHistory {
     @Column(name = "id")  // Указывает имя колонки в базе данных
     private Long id;
 
-    @Column(name = "license_id", nullable = false)  // Указывает колонку для идентификатора лицензии
-    private Long licenseId;
+    @ManyToOne
+    @JoinColumn(name = "license_id", nullable = false)  // Указывает колонку для идентификатора лицензии
+    private License licenseId;
 
-    @Column(name = "user_id", nullable = false)  // Указывает колонку для идентификатора пользователя, связанного с лицензией
-    private Long userId;
+    @ManyToOne
+    @JoinColumn(name = "user_id", nullable = false)  // Указывает колонку для идентификатора пользователя, связанного с лицензией
+    private ApplicationUser userId;
 
     @Column(name = "status", nullable = false)  // Статус лицензии (например, активна, заблокирована и т.д.)
     private String status;

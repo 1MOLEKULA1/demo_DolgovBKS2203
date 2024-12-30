@@ -27,11 +27,13 @@ public class DeviceLicense {
     @Column(name = "id")  // Указывает, что это поле соответствует колонке "id" в таблице
     private Long id;
 
-    @Column(name = "license_id")  // Указывает, что это поле соответствует колонке "license_id" в таблице
-    private Long licenseId;
+    @ManyToOne
+    @JoinColumn (name = "license_id")  // Указывает, что это поле соответствует колонке "license_id" в таблице
+    private License licenseId;
 
-    @Column(name = "device_id")  // Указывает, что это поле соответствует колонке "device_id" в таблице
-    private Long deviceId;
+    @ManyToOne
+    @JoinColumn(name = "device_id")  // Указывает, что это поле соответствует колонке "device_id" в таблице
+    private Device deviceId;
 
     @Column(name = "activation_date")  // Указывает, что это поле соответствует колонке "activation_date" в таблице
     private Date activationDate;  // Дата активации лицензии на устройстве

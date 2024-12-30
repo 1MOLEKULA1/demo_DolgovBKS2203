@@ -56,13 +56,13 @@ public class LicensingControllerCheck {
             Device device = deviceOptional.get();
             logger.info("Устройство найдено: {}", device);
 
-            Optional<DeviceLicense> deviceLicenseOptional = deviceLicenseRepository.findByDeviceId(device.getId());
+            Optional<DeviceLicense> deviceLicenseOptional = deviceLicenseRepository.findByDeviceId(device);
             if (deviceLicenseOptional.isEmpty()) {
                 return createErrorResponse(HttpStatus.NOT_FOUND, ERROR_LICENSE_NOT_ACTIVE);
             }
 
             DeviceLicense deviceLicense = deviceLicenseOptional.get();
-            Optional<License> licenseOptional = licenseRepository.findById(deviceLicense.getLicenseId());
+            Optional<License> licenseOptional = licenseRepository.findById(deviceLicense.getLicenseId().getId());
 
             if (licenseOptional.isPresent()) {
                 License license = licenseOptional.get();
@@ -71,7 +71,7 @@ public class LicensingControllerCheck {
                         license.getUser().getId(),
                         false,
                         license.getEndingDate(),
-                        deviceLicense.getDeviceId(),
+                        deviceLicense.getDeviceId().getId(),
                         SECRET_KEY
                 );
 

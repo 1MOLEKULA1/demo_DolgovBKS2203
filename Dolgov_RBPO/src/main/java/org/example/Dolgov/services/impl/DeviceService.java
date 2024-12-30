@@ -1,5 +1,6 @@
 package org.example.Dolgov.services.impl;
 
+import org.example.Dolgov.entity.ApplicationUser;
 import org.example.Dolgov.entity.Device;
 import org.example.Dolgov.entity.DeviceLicense;
 import org.example.Dolgov.entity.License;
@@ -40,7 +41,7 @@ public class DeviceService {
 
         return deviceRepository.save(device);
     }
-    public Device findOrRegisterDevice(String macAddress, String deviceName, Long userId) {
+    public Device findOrRegisterDevice(String macAddress, String deviceName, ApplicationUser userId) {
         Device device = deviceRepository.findByMacAddress(macAddress);
         if (device != null) {
             // Если устройство найдено, обновляем его имя и пользователя
@@ -80,11 +81,11 @@ public class DeviceService {
             Device device = deviceOpt.get();
 
             // 1. Удаляем запись о привязке устройства к лицензии из таблицы DeviceLicense
-            Optional<DeviceLicense> deviceLicenseOpt = deviceLicenseRepository.findByDeviceId(id);
+            Optional<DeviceLicense> deviceLicenseOpt = deviceLicenseRepository.findByDeviceId(device);
             if (deviceLicenseOpt.isPresent()) {
                 DeviceLicense deviceLicense = deviceLicenseOpt.get();
 
-                Optional<License> licenseOpt = licenseRepository.findById(deviceLicense.getLicenseId());
+                Optional<License> licenseOpt = licenseRepository.findById(deviceLicense.getLicenseId().getId());
 
                 // 2. Получаем лицензию, которая привязана к устройству
                 License license = licenseOpt.get();

@@ -34,31 +34,36 @@ public class LicensingControllerUpdate {
 
     private static final String SECRET_KEY = "your-secret-key"; // TODO: заменить на реальный способ получения ключа
 
-
     @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
     @PostMapping("/update")
     public ResponseEntity<?> updateLicense(HttpServletRequest request, @RequestBody LicenseUpdate requestData) {
         try {
+            // Шаг 1: Извлекаем роли из токена
             Set<String> roles = extractRolesFromToken(request);
             if (roles.isEmpty()) {
                 return unauthorizedResponse("Роли не найдены в токене.");
             }
 
+            // Шаг 2: Проверяем лицензию
             License license = validateLicense(requestData.getCode());
             ApplicationUser user = validateLicenseOwnership(request, license);
 
+            // Шаг 3: Проверяем возможность продления лицензии
             if (!canRenewLicense(license)) {
                 return handleBlockedOrExpiredLicense(license);
             }
 
+            // Шаг 4: Проверяем и парсим новую дату окончания лицензии
             Date newExpirationDate = parseExpirationDate(requestData.getNewExpirationDate());
             if (!isValidNewExpirationDate(license, newExpirationDate)) {
                 return invalidExpirationDateResponse(license, newExpirationDate);
             }
 
+            // Шаг 5: Обновляем дату окончания и продолжительность лицензии
             int newDuration = calculateDaysBetween(newExpirationDate);
             updateLicenseExpiration(license, newExpirationDate, newDuration);
 
+            // Шаг 6: Возвращаем успешный ответ
             return handleSuccessfulRenewal(license, newExpirationDate, newDuration);
         } catch (ParseException e) {
             return handleParseException(e);
@@ -71,7 +76,7 @@ public class LicensingControllerUpdate {
 
     private Set<String> extractRolesFromToken(HttpServletRequest request) {
         Set<String> roles = jwtTokenProvider.getRolesFromRequest(request);
-        logger.info("Роль извлечена из токена: {}", roles);
+        logger.info("Роли, извлеченные из токена: {}", roles);
         return roles;
     }
 
@@ -114,7 +119,6 @@ public class LicensingControllerUpdate {
         boolean isBlocked = license.getBlocked();
         Date expirationDate = null;
         Long deviceId = null;
-
         return Ticket.createTicket(userId, isBlocked, expirationDate, deviceId, SECRET_KEY);
     }
 
@@ -147,7 +151,6 @@ public class LicensingControllerUpdate {
         logger.info("Тикет: {}", ticket);
 
         String deviceMessage = getDeviceActivationStatus(license);
-
         return ResponseEntity.status(HttpStatus.OK).body(deviceMessage + "\nЛицензия продлена до: " + newExpirationDate);
     }
 
@@ -155,12 +158,11 @@ public class LicensingControllerUpdate {
         Long userId = license.getOwner().getId();
         boolean isBlocked = false;
         Long deviceId = null;
-
         return Ticket.createTicket(userId, isBlocked, newExpirationDate, deviceId, SECRET_KEY);
     }
 
     private String getDeviceActivationStatus(License license) {
-        Optional<DeviceLicense> deviceLicenseOpt = deviceLicenseRepository.findByLicenseId(license.getId());
+        Optional<DeviceLicense> deviceLicenseOpt = deviceLicenseRepository.findByLicenseId(license);
         if (deviceLicenseOpt.isPresent()) {
             DeviceLicense deviceLicense = deviceLicenseOpt.get();
             return "Лицензия активирована на устройстве с ID " + deviceLicense.getDeviceId();

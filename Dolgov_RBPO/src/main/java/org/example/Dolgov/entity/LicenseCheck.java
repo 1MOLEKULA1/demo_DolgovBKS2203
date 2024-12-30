@@ -14,7 +14,7 @@ import lombok.Setter;
 @AllArgsConstructor  // Генерация конструктора со всеми полями
 @NoArgsConstructor  // Генерация конструктора без параметров
 public class LicenseCheck {
-
+//todo Сделать вывод по мак адресу
     private String macAddress;  // MAC-адрес устройства для поиска
 
     private String deviceName;  // Имя устройства для поиска

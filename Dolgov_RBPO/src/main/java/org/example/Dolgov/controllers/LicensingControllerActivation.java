@@ -48,7 +48,7 @@ public class LicensingControllerActivation {
         return ResponseEntity.status(status).body(message);
     }
 
-    private Device registerDevice(String macAddress, String deviceName, Long userId) {
+    private Device registerDevice(String macAddress, String deviceName, ApplicationUser userId) {
         Device newDevice = new Device();
         newDevice.setMacAddress(macAddress);
         newDevice.setName(deviceName);
@@ -91,16 +91,16 @@ public class LicensingControllerActivation {
                 return createErrorResponse(HttpStatus.BAD_REQUEST, ERROR_DEVICE_EXISTS);
             }
 
-            Device device = existingDeviceOptional.orElseGet(() -> registerDevice(activationRequest.getMacAddress(), activationRequest.getDeviceName(), user.getId()));
+            Device device = existingDeviceOptional.orElseGet(() -> registerDevice(activationRequest.getMacAddress(), activationRequest.getDeviceName(), user));
 
             if (license.getDeviceCount() <= 0) {
                 return createErrorResponse(HttpStatus.BAD_REQUEST, ERROR_NO_AVAILABLE_SEATS);
             }
 
-            if (deviceLicenseRepository.findByDeviceIdAndLicenseId(device.getId(), license.getId()).isPresent()) {
+            if (deviceLicenseRepository.findByDeviceIdAndLicenseId(device, license).isPresent()) {
                 return createErrorResponse(HttpStatus.BAD_REQUEST, ERROR_LICENSE_ALREADY_ACTIVE);
             }
-
+            //Todo здесь устанавливается время активации
             if (license.getFirstActivationDate() == null) {
                 license.setFirstActivationDate(new Date());
                 Date licenseEndDate = new Date(license.getFirstActivationDate().getTime() +
@@ -109,8 +109,8 @@ public class LicensingControllerActivation {
             }
 
             DeviceLicense deviceLicense = new DeviceLicense();
-            deviceLicense.setDeviceId(device.getId());
-            deviceLicense.setLicenseId(license.getId());
+            deviceLicense.setDeviceId(device);
+            deviceLicense.setLicenseId(license);
             deviceLicense.setActivationDate(new Date());
             deviceLicenseRepository.save(deviceLicense);
 
@@ -121,8 +121,8 @@ public class LicensingControllerActivation {
             logger.info("Оставшиеся места для лицензии с кодом {} уменьшены на 1", activationRequest.getCode());
 
             licenseHistoryService.recordLicenseChange(
-                    license.getId(),
-                    user.getId(),
+                    license,
+                    user,
                     "Activated",
                     new Date(),
                     "Лицензия активирована на устройстве"
@@ -130,15 +130,15 @@ public class LicensingControllerActivation {
             logger.info("Изменения лицензии записаны в историю");
 
             Ticket ticket = Ticket.createTicket(
-                    user.getId(),
+                    null,
                     false,
                     license.getEndingDate(),
-                    device.getId(),
+                    null,
                     SECRET_KEY
             );
             logger.info("Создан тикет подтверждения активации: {}", ticket);
 
-            return ResponseEntity.ok("Лицензия успешно активирована на устройстве. Тикет: " + ticket.getId());
+            return ResponseEntity.ok(ticket);
 
         } catch (Exception e) {
             logger.error("Ошибка при активации лицензии: {}", e.getMessage(), e);

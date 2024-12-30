@@ -93,7 +93,7 @@ public class LicensingControllerCreate {
             logger.info("License successfully saved to the database with ID: {}", newLicense.getId());
 
             // Запись в историю
-            licenseHistoryService.recordLicenseChange(newLicense.getId(), owner.getId(), "Created", new Date(), "License created");
+            licenseHistoryService.recordLicenseChange(newLicense, owner, "Created", new Date(), "License created");
             logger.info("License change recorded in history");
 
             return ResponseEntity.status(HttpStatus.CREATED).body("License successfully created");
